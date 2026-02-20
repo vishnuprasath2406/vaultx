@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Verify OTP</title>
+<style>
+body{
+display:flex;
+justify-content:center;
+align-items:center;
+height:100vh;
+background:#f1f5f9;
+font-family:Segoe UI;
+}
+.box{
+background:white;
+padding:40px;
+border-radius:15px;
+box-shadow:0 10px 25px rgba(0,0,0,0.1);
+width:300px;
+text-align:center;
+}
+input{
+width:100%;
+padding:10px;
+margin-top:15px;
+border-radius:8px;
+border:1px solid #ccc;
+}
+button{
+margin-top:15px;
+padding:10px;
+width:100%;
+border:none;
+border-radius:8px;
+background:#2563eb;
+color:white;
+cursor:pointer;
+}
+.error{
+color:red;
+margin-top:10px;
+}
+</style>
+</head>
+<body>
+
+<div class="box">
+
+<h2>Enter OTP</h2>
+<p>Check your email for the OTP</p>
+
+<form method="POST">
+    {% csrf_token %}
+    
+    <input type="text" name="otp" placeholder="Enter OTP" required>
+
+    <button type="submit">Verify</button>
+</form>
+
+
+{% if error %}
+<p class="error">{{ error }}</p>
+{% endif %}
+
+</div>
+
+</body>
+</html>

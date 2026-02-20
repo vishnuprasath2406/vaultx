@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>VaultX - Smart Warranty Vault</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+
+/* RESET */
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Segoe UI', Arial, sans-serif;
+}
+
+/* BACKGROUND */
+body{
+min-height:100vh;
+background:
+linear-gradient(rgba(15,23,42,.85),rgba(15,23,42,.85)),
+url("https://images.unsplash.com/photo-1518770660439-4636190af475?auto=format&fit=crop&w=1600&q=80")
+center/cover no-repeat;
+display:flex;
+align-items:center;
+justify-content:center;
+animation:bgZoom 25s infinite alternate ease-in-out;
+overflow:hidden;
+}
+
+@keyframes bgZoom{
+0%{background-size:100%;}
+100%{background-size:115%;}
+}
+
+/* CONTAINER */
+.container{
+width:92%;
+max-width:1050px;
+display:flex;
+background:rgba(255,255,255,0.08);
+backdrop-filter:blur(20px);
+border-radius:20px;
+overflow:hidden;
+box-shadow:0 25px 60px rgba(0,0,0,.6);
+animation:fadeIn .8s ease;
+}
+
+@keyframes fadeIn{
+from{opacity:0;transform:translateY(20px);}
+to{opacity:1;transform:translateY(0);}
+}
+
+/* LEFT SIDE */
+.left{
+flex:1;
+padding:60px 50px;
+color:white;
+display:flex;
+flex-direction:column;
+justify-content:center;
+background:linear-gradient(135deg,#0f172a,#1e293b);
+}
+
+.left h1{
+font-size:46px;
+letter-spacing:3px;
+margin-bottom:15px;
+background:linear-gradient(90deg,#3b82f6,#06b6d4);
+-webkit-background-clip:text;
+background-clip:text;
+color:transparent;
+}
+
+.left p{
+color:#e2e8f0;
+line-height:1.7;
+font-size:16px;
+}
+
+/* RIGHT SIDE */
+.right{
+flex:1;
+background:white;
+padding:50px 45px;
+display:flex;
+flex-direction:column;
+justify-content:center;
+border-radius:0 20px 20px 0;
+}
+
+.right img{
+width:120px;
+margin:0 auto 20px;
+display:block;
+}
+
+.right h2{
+text-align:center;
+margin-bottom:25px;
+color:#0f172a;
+font-weight:600;
+}
+
+/* INPUT */
+input,select{
+width:100%;
+padding:14px;
+margin:12px 0;
+border-radius:12px;
+border:1px solid #e2e8f0;
+font-size:15px;
+transition:.3s;
+}
+
+input:focus,select:focus{
+border-color:#2563eb;
+box-shadow:0 0 0 4px rgba(37,99,235,.15);
+outline:none;
+}
+
+/* BUTTON */
+button{
+width:100%;
+padding:14px;
+margin-top:18px;
+border:none;
+border-radius:12px;
+background:linear-gradient(90deg,#2563eb,#06b6d4);
+color:white;
+font-size:16px;
+cursor:pointer;
+transition:.3s;
+position:relative;
+}
+
+button:hover{
+transform:translateY(-2px);
+box-shadow:0 15px 30px rgba(37,99,235,.4);
+}
+
+/* LOADER */
+.loader{
+display:none;
+width:18px;
+height:18px;
+border:3px solid white;
+border-top:3px solid transparent;
+border-radius:50%;
+position:absolute;
+right:20px;
+top:50%;
+transform:translateY(-50%);
+animation:spin 1s linear infinite;
+}
+
+@keyframes spin{
+0%{transform:translateY(-50%) rotate(0deg);}
+100%{transform:translateY(-50%) rotate(360deg);}
+}
+
+#error{
+margin-top:12px;
+color:#dc2626;
+font-size:14px;
+text-align:center;
+}
+
+.footer{
+text-align:center;
+margin-top:18px;
+font-size:13px;
+color:#64748b;
+}
+
+/* MOBILE */
+@media(max-width:768px){
+.container{
+flex-direction:column;
+}
+.right{
+border-radius:0 0 20px 20px;
+}
+.left{
+text-align:center;
+}
+}
+.toast {
+position: fixed;
+top: 20px;
+right: 20px;
+background: #dc2626;
+color: white;
+padding: 12px 18px;
+border-radius: 8px;
+box-shadow: 0 8px 20px rgba(0,0,0,.2);
+opacity: 0;
+transition: .4s;
+}
+
+.toast.show {
+opacity: 1;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<!-- LEFT -->
+<div class="left">
+<h1>VaultX</h1>
+<p>
+Smart Warranty Vault System<br><br>
+Secure digital platform for managing product warranties,
+claims, and service workflows for customers, sellers,
+and service centers.
+</p>
+</div>
+
+<!-- RIGHT -->
+<div class="right">
+
+{% load static %}
+
+    <img src="{% static 'images/logo.png' %}" alt="VaultX Logo">
+
+<h2>Welcome Back</h2>
+
+<form method="POST">
+    {% csrf_token %}
+
+    <input name="username" placeholder="User ID" required>
+    <input name="password" type="password" placeholder="Password" required>
+
+    <select name="role" required>
+        <option value="">Select Role</option>
+        <option value="seller">Seller</option>
+        <option value="service">Service Center</option>
+        <option value="customer">Customer</option>
+    </select>
+
+    <button type="submit">Login</button>
+
+    {% if error %}
+        <p style="color:red;">{{ error }}</p>
+    {% endif %}
+</form>
+{% if error %}
+<div class="toast show">
+{{ error }}
+</div>
+<script>
+setTimeout(()=>{
+document.querySelector(".toast").remove();
+},3000);
+</script>
+{% endif %}
+
+</select>
+
+
+
+<p id="error"></p>
+
+<div class="footer">
+© 2026 VaultX Technologies
+</div>
+
+</div>
+</div>
+
+
+</body>
+</html>

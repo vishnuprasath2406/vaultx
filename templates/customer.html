@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VaultX Dashboard</title>
+
+<style>
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',sans-serif;}
+body{display:flex;background:#f1f5f9;min-height:100vh;}
+
+.sidebar{
+width:250px;
+background:linear-gradient(180deg,#1e3a8a,#2563eb);
+color:white;
+padding:25px 20px;
+position:fixed;
+height:100vh;
+display:flex;
+flex-direction:column;
+}
+
+.brand{display:flex;align-items:center;gap:10px;margin-bottom:30px;}
+.brand img{width:35px;height:35px;object-fit:contain;}
+.brand h2{font-size:20px;}
+
+.sidebar ul{list-style:none;}
+.sidebar ul li{
+padding:12px 15px;
+margin-bottom:10px;
+border-radius:8px;
+cursor:pointer;
+transition:0.3s;
+}
+.sidebar ul li:hover,
+.sidebar ul li.active{
+background:rgba(255,255,255,0.2);
+transform:translateX(5px);
+}
+
+.main{margin-left:250px;width:100%;padding:30px;}
+
+.section{display:none;animation:fadeIn 0.5s ease;}
+.section.active{display:block;}
+
+@keyframes fadeIn{
+from{opacity:0;transform:translateY(20px);}
+to{opacity:1;transform:translateY(0);}
+}
+
+.dashboard-header{
+background:white;
+padding:20px;
+border-radius:15px;
+margin-bottom:25px;
+box-shadow:0 10px 25px rgba(0,0,0,0.05);
+}
+
+.cards{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:20px;
+}
+
+.card{
+background:linear-gradient(135deg,#2563eb,#1e40af);
+color:white;
+padding:25px;
+border-radius:15px;
+box-shadow:0 10px 25px rgba(0,0,0,0.1);
+}
+
+.card h4{font-weight:400;margin-bottom:10px;}
+.card h2{font-size:32px;}
+
+.content-box{
+background:white;
+padding:25px;
+border-radius:15px;
+box-shadow:0 10px 25px rgba(0,0,0,0.05);
+margin-bottom:20px;
+}
+
+table{width:100%;border-collapse:collapse;margin-top:15px;}
+th, td{padding:12px;text-align:left;border-bottom:1px solid #e5e7eb;}
+th{background:#eff6ff;}
+
+select, input, textarea{
+width:100%;
+padding:10px;
+margin-top:10px;
+border-radius:8px;
+border:1px solid #ccc;
+}
+
+button{
+margin-top:15px;
+padding:10px 15px;
+border:none;
+border-radius:8px;
+background:#2563eb;
+color:white;
+cursor:pointer;
+}
+
+.expiring{color:red;font-weight:bold;}
+
+/* 🔥 STATUS BADGES */
+.badge{
+padding:6px 12px;
+border-radius:20px;
+color:white;
+font-size:13px;
+}
+.pending{background:#f59e0b;}
+.approved{background:#16a34a;}
+.rejected{background:#dc2626;}
+.in_repair{background:#3b82f6;}
+.completed{background:#7c3aed;}
+
+/* 🔥 PROGRESS BAR */
+.progress{
+background:#e5e7eb;
+border-radius:10px;
+height:10px;
+width:100%;
+margin-top:5px;
+}
+.progress-bar{
+background:#2563eb;
+height:10px;
+border-radius:10px;
+}
+.timeline{
+font-size:12px;
+color:#64748b;
+margin-top:6px;
+}
+.brand img{
+width:45px;
+filter: drop-shadow(0px 5px 10px rgba(0,0,0,0.2));
+}
+
+
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+<div class="brand">
+{% load static %}
+
+    <img src="{% static 'images/logo.png' %}" alt="VaultX Logo">
+
+<h2>VaultX</h2>
+</div>
+
+<ul>
+<li class="menu active" data-section="dashboard">Dashboard</li>
+<li class="menu" data-section="warranties">My Warranties</li>
+<li class="menu" data-section="claims">Raise Claim</li>
+<li class="menu" data-section="myclaims">My Claims</li>
+<li class="menu" data-section="profile">Profile</li>
+<li class="menu" onclick="logout()">Logout</li>
+</ul>
+</div>
+
+<div class="main">
+
+<!-- DASHBOARD -->
+<div class="section active" id="dashboard">
+<div class="dashboard-header">
+<h2>Welcome, {{ customer.name }}</h2>
+</div>
+
+<div class="cards">
+<div class="card">
+<h4>Total Products</h4>
+<h2>{{ products|length }}</h2>
+</div>
+
+<div class="card">
+<h4>Active Warranties</h4>
+<h2>{{ products|length }}</h2>
+</div>
+</div>
+</div>
+
+<!-- WARRANTIES -->
+<div class="section" id="warranties">
+<div class="content-box">
+<h2>My Warranties</h2>
+
+<table>
+<tr>
+<th>Product</th>
+<th>Serial</th>
+<th>Start</th>
+<th>End</th>
+</tr>
+
+{% for product in products %}
+<tr>
+<td>{{ product.product_name }}</td>
+<td>{{ product.serial_number }}</td>
+<td>{{ product.warranty_start }}</td>
+<td>
+{% if product.warranty_end < today %}
+<span class="expiring">{{ product.warranty_end }}</span>
+{% else %}
+{{ product.warranty_end }}
+{% endif %}
+</td>
+</tr>
+{% empty %}
+<tr><td colspan="4">No products registered</td></tr>
+{% endfor %}
+</table>
+
+</div>
+</div>
+
+<!-- RAISE CLAIM -->
+<div class="section" id="claims">
+<div class="content-box">
+<h2>Raise a Claim</h2>
+
+<form method="POST" action="/raise-claim/" enctype="multipart/form-data">
+{% csrf_token %}
+
+<label>Select Product</label>
+<select name="product_id" required>
+{% for product in products %}
+<option value="{{ product.id }}">{{ product.product_name }}</option>
+{% endfor %}
+</select>
+
+<label>Description</label>
+<textarea name="description" rows="4" required></textarea>
+
+<label>Upload Attachment (Optional)</label>
+<input type="file" name="attachment">
+
+<button type="submit">Submit Claim</button>
+
+</form>
+</div>
+</div>
+
+<!-- MY CLAIMS -->
+<div class="section" id="myclaims">
+<div class="content-box">
+<h2>My Claims</h2>
+
+<table>
+<tr>
+<th>Product</th>
+<th>Description</th>
+<th>Status</th>
+<th>Attachment</th>
+</tr>
+
+{% for claim in claims %}
+<tr>
+<td>{{ claim.product.product_name }}</td>
+<td>{{ claim.description }}</td>
+
+<td>
+<span class="badge {{ claim.status }}">
+{{ claim.status|title }}
+</span>
+</td>
+
+
+
+
+<td>
+{% if claim.attachment %}
+<a href="{{ claim.attachment.url }}" target="_blank">View</a>
+{% else %}
+No File
+{% endif %}
+</td>
+</tr>
+
+<tr>
+<td colspan="5">
+{% for history in claim.history.all %}
+<div class="timeline">
+• {{ history.status|title }} — {{ history.updated_at }}
+</div>
+{% endfor %}
+</td>
+</tr>
+
+{% empty %}
+<tr><td colspan="5">No claims submitted</td></tr>
+{% endfor %}
+</table>
+
+</div>
+</div>
+
+<!-- PROFILE -->
+<div class="section" id="profile">
+<div class="content-box">
+<h2>Profile Information</h2>
+<p><strong>Name:</strong> {{ customer.name }}</p>
+<p><strong>Email:</strong> {{ customer.email }}</p>
+<p><strong>Mobile:</strong> {{ customer.mobile }}</p>
+<p><strong>Address:</strong> {{ customer.address }}</p>
+</div>
+</div>
+
+</div>
+
+<script>
+  
+
+
+
+const menuItems = document.querySelectorAll(".menu");
+const sections = document.querySelectorAll(".section");
+
+menuItems.forEach(item=>{
+item.addEventListener("click",()=>{
+menuItems.forEach(m=>m.classList.remove("active"));
+sections.forEach(s=>s.classList.remove("active"));
+
+item.classList.add("active");
+
+const sectionId = item.getAttribute("data-section");
+if(sectionId){
+document.getElementById(sectionId).classList.add("active");
+}
+});
+});
+
+function logout(){
+window.location.href="/logout/";
+}
+</script>
+<!-- ================= VAULTX CHATBOT ================= -->
+<div id="vx-chat-button">💬</div>
+
+<div id="vx-chat">
+
+    <div class="vx-header">
+        <div class="vx-title">
+            <div class="vx-avatar">V</div>
+            <div>
+                <b>VaultX Assistant</b>
+                <small>Online</small>
+            </div>
+        </div>
+        <div id="vx-close">✕</div>
+    </div>
+
+    <div id="vx-messages"></div>
+
+    <div class="vx-input">
+        <input id="vx-text" placeholder="Ask about warranty, claims, repairs..." autocomplete="off">
+        <button id="vx-send">➤</button>
+    </div>
+
+</div>
+
+<style>
+
+/* Floating button */
+#vx-chat-button{
+    position:fixed;
+    bottom:22px;
+    right:22px;
+    width:64px;
+    height:64px;
+    border-radius:50%;
+    background:linear-gradient(135deg,#2563eb,#1e3a8a);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    font-size:28px;
+    cursor:pointer;
+    box-shadow:0 12px 30px rgba(0,0,0,.25);
+    z-index:9999;
+}
+
+/* Chat box */
+#vx-chat{
+    position:fixed;
+    bottom:100px;
+    right:22px;
+    width:360px;
+    height:520px;
+    background:#fff;
+    border-radius:20px;
+    box-shadow:0 25px 70px rgba(0,0,0,.28);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    transform:translateY(40px) scale(.9);
+    opacity:0;
+    pointer-events:none;
+    transition:.25s ease;
+    z-index:9999;
+}
+#vx-chat.open{
+    transform:translateY(0) scale(1);
+    opacity:1;
+    pointer-events:auto;
+}
+
+/* Header */
+.vx-header{
+    background:linear-gradient(135deg,#2563eb,#1e40af);
+    color:white;
+    padding:14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+.vx-title{display:flex;gap:10px;align-items:center;}
+.vx-avatar{
+    width:36px;height:36px;border-radius:50%;
+    background:white;color:#2563eb;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:bold;
+}
+#vx-close{cursor:pointer;font-size:18px}
+
+/* Messages */
+#vx-messages{
+    flex:1;
+    padding:16px;
+    overflow-y:auto;
+    background:#f1f5f9;
+}
+
+.msg{
+    max-width:75%;
+    padding:10px 14px;
+    border-radius:16px;
+    margin-bottom:10px;
+    line-height:1.4;
+    white-space:pre-wrap;
+}
+.user{background:#2563eb;color:white;margin-left:auto;border-bottom-right-radius:4px;}
+.bot{background:white;border:1px solid #e5e7eb;border-bottom-left-radius:4px;}
+.typing{opacity:.6;font-style:italic}
+
+/* Input */
+.vx-input{
+    display:flex;
+    padding:12px;
+    border-top:1px solid #e5e7eb;
+    background:white;
+}
+#vx-text{
+    flex:1;
+    border:none;
+    outline:none;
+    background:#f1f5f9;
+    padding:12px;
+    border-radius:30px;
+}
+#vx-send{
+    margin-left:10px;
+    border:none;
+    background:#2563eb;
+    color:white;
+    border-radius:50%;
+    width:42px;
+    height:42px;
+    cursor:pointer;
+}
+
+/* Mobile responsive */
+@media(max-width:600px){
+    #vx-chat{
+        width:100%;
+        height:100%;
+        right:0;
+        bottom:0;
+        border-radius:0;
+    }
+}
+
+</style>
+
+<script>
+
+const btn=document.getElementById("vx-chat-button");
+const chat=document.getElementById("vx-chat");
+const close=document.getElementById("vx-close");
+const send=document.getElementById("vx-send");
+const input=document.getElementById("vx-text");
+const box=document.getElementById("vx-messages");
+
+/* open / close */
+btn.onclick=()=>chat.classList.toggle("open");
+close.onclick=()=>chat.classList.remove("open");
+
+/* add message */
+function addMessage(text,type,extra=""){
+    const div=document.createElement("div");
+    div.className=`msg ${type} ${extra}`;
+    div.textContent=text;
+    box.appendChild(div);
+    box.scrollTop=box.scrollHeight;
+    return div;
+}
+
+/* send to django */
+async function sendMessage(){
+
+    const text=input.value.trim();
+    if(!text) return;
+
+    addMessage(text,"user");
+    input.value="";
+
+    const typing=addMessage("Typing...","bot","typing");
+
+    try{
+        const response=await fetch("/chatbot_api/",{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({message:text})
+        });
+
+        const data=await response.json();
+        typing.remove();
+
+        if(data.reply)
+            addMessage(data.reply,"bot");
+        else
+            addMessage("AI did not respond properly.","bot");
+
+    }catch(e){
+        typing.remove();
+        addMessage("Server connection failed.","bot");
+    }
+}
+
+/* send events */
+send.onclick=sendMessage;
+input.addEventListener("keypress",e=>{
+    if(e.key==="Enter") sendMessage();
+});
+
+</script>
+<!-- ================= END CHATBOT ================= -->
+
+</body>
+</html>

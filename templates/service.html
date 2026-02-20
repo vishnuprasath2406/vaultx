@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>VaultX Service Center - Warranty Claim Management</title>
+
+{% load static %}
+
+<style>
+:root {
+  --primary: #2563eb;
+  --accent: #f59e0b;
+  --bg: #f1f5f9;
+  --card-bg: #ffffff;
+  --text: #1f2937;
+  --sidebar: #0f172a;
+}
+body.dark-mode {
+  --bg: #0b1120;
+  --card-bg: #1e293b;
+  --text: #f8fafc;
+  --sidebar: #020617;
+}
+* { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
+body { display:flex; background:var(--bg); color:var(--text); min-height:100vh; }
+
+/* Sidebar */
+.sidebar {
+  width:250px;
+  height:100vh;
+  background:var(--sidebar);
+  padding:20px;
+  position:fixed;
+  color:white;
+}
+.logo-section { display:flex; align-items:center; gap:10px; margin-bottom:30px; }
+.logo-section img { width:40px; height:40px; }
+.logo-section h2 { color:white; }
+
+.sidebar a {
+  display:block;
+  padding:12px;
+  margin-bottom:10px;
+  color:#cbd5e1;
+  border-radius:6px;
+  cursor:pointer;
+  transition:0.3s;
+}
+.sidebar a.active,
+.sidebar a:hover {
+  background:var(--primary);
+  color:white;
+}
+
+.sidebar button {
+  margin-top:10px;
+  padding:10px;
+  width:100%;
+  border:none;
+  border-radius:6px;
+  background:var(--primary);
+  color:white;
+  cursor:pointer;
+}
+
+/* Main */
+.main { margin-left:250px; padding:30px; width:100%; }
+
+/* Cards */
+.card {
+  background:var(--card-bg);
+  padding:20px;
+  border-radius:10px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.08);
+  margin-bottom:25px;
+  display:none;
+  animation:fadeIn 0.4s ease;
+}
+.card.active { display:block; }
+
+@keyframes fadeIn {
+  from{opacity:0;transform:translateY(10px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+table { width:100%; border-collapse:collapse; }
+table th, table td { padding:10px; border-bottom:1px solid #ddd; }
+table th { background:var(--primary); color:white; }
+
+.status-btn {
+  padding:6px 10px;
+  border:none;
+  border-radius:6px;
+  margin-right:5px;
+  cursor:pointer;
+  color:white;
+  transition:0.3s;
+}
+.approve { background:#16a34a; }
+.reject { background:#dc2626; }
+.repair { background:#f59e0b; }
+.complete { background:#7c3aed; }
+
+.status-btn:hover { transform:scale(1.05); }
+
+.status-text {
+  font-weight:bold;
+  text-transform:capitalize;
+}
+.kpi-box{
+  background:var(--card-bg);
+  padding:15px;
+  border-radius:10px;
+  box-shadow:0 4px 10px rgba(0,0,0,0.08);
+  font-size:15px;
+}
+.progress{
+  width:100%;
+  background:#e5e7eb;
+  border-radius:6px;
+  margin-top:10px;
+}
+/* ===== Corporate Search Bar ===== */
+
+.corp-search{
+  margin-top:18px;
+  display:flex;
+  align-items:center;
+  background:white;
+  border-radius:14px;
+  padding:8px 10px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.08);
+  transition:0.3s ease;
+  border:1px solid #e5e7eb;
+}
+
+.corp-search:focus-within{
+  border:1px solid #2563eb;
+  box-shadow:0 10px 30px rgba(37,99,235,0.25);
+  transform:translateY(-2px);
+}
+
+.search-icon{
+  font-size:18px;
+  margin-right:8px;
+  color:#64748b;
+}
+
+.corp-search input{
+  flex:1;
+  border:none;
+  outline:none;
+  font-size:14px;
+  padding:10px;
+  background:transparent;
+  color:#1f2937;
+}
+
+.corp-search input::placeholder{
+  color:#94a3b8;
+}
+
+.corp-btn{
+  padding:10px 18px;
+  border:none;
+  border-radius:10px;
+  background:linear-gradient(135deg,#2563eb,#1e40af);
+  color:white;
+  font-weight:600;
+  cursor:pointer;
+  transition:0.3s ease;
+}
+
+.corp-btn:hover{
+  transform:scale(1.05);
+  box-shadow:0 8px 20px rgba(37,99,235,0.35);
+}
+
+.corp-btn:active{
+  transform:scale(0.95);
+}
+
+
+</style>
+</head>
+
+<body>
+
+<div class="sidebar">
+  <div class="logo-section">
+    <img src="{% static 'images/logo.png' %}" alt="VaultX Logo">
+    <h2>VaultX</h2>
+  </div>
+
+  <a onclick="showSection('dashboard', this)" class="active">Dashboard</a>
+  <a onclick="showSection('claims', this)">Approved Claims</a>
+  <a onclick="showSection('customerRequests', this)">Customer Requests</a>
+  <a onclick="showSection('searchCustomer', this)">Search Customer</a>
+
+  <button onclick="logout()">Logout</button>
+  <button onclick="toggleTheme()">🌙 Toggle Mode</button>
+</div>
+
+<div class="main">
+
+<div class="card active" id="dashboard">
+
+  <h1>Welcome, {{ username }}</h1><br>
+  <p>serve the best service for our customers</p>
+
+  
+
+
+
+<div class="card" id="claims">
+  <h2>Approved / Active Claims</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Customer</th>
+        <th>Product</th>
+        <th>Serial</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="approvedTable"></tbody>
+  </table>
+</div>
+<div class="card" id="customerRequests">
+  <h2>New Customer Requests</h2>
+
+  <table>
+    <thead>
+      <tr>
+        <th>#</th>
+        <th>Customer</th>
+        <th>Product</th>
+        <th>Serial</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="pendingTable"></tbody>
+  </table>
+</div>
+
+
+
+<div class="card" id="searchCustomer">
+  <h2>Search Customer</h2>
+
+  <div class="corp-search">
+      <div class="search-icon">🔎</div>
+      <input type="text" id="searchId" placeholder="Search by Customer ID..." autocomplete="off">
+      <button onclick="searchCustomer()" class="corp-btn">
+          Search
+      </button>
+  </div>
+
+  <div id="searchResult"></div>
+</div>
+
+
+</div>
+
+<script>
+
+
+
+
+function updateClaim(id, status){
+
+  fetch("/service-update-claim/",{
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "X-CSRFToken": getCookie("csrftoken")
+    },
+    body: JSON.stringify({
+      claim_id:id,
+      status:status
+    })
+  })
+  .then(res=>res.json())
+  .then(data=>{
+    if(data.success){
+      loadClaims();
+    }else{
+      alert("Update failed");
+    }
+  });
+
+}
+
+function updateStatus(id, status){
+    updateClaim(id, status);
+}
+
+function getCookie(name){
+  let value=null;
+  if(document.cookie){
+    document.cookie.split(';').forEach(c=>{
+      c=c.trim();
+      if(c.startsWith(name+'=')){
+        value=decodeURIComponent(c.substring(name.length+1));
+      }
+    });
+  }
+  return value;
+}
+
+window.onload=loadClaims;
+
+
+
+function showSection(id, el){
+  document.querySelectorAll(".card").forEach(c=>c.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+
+  document.querySelectorAll(".sidebar a").forEach(a=>a.classList.remove("active"));
+  if(el) el.classList.add("active");
+}
+
+function loadClaims(){
+  fetch("/service-claims-data/")
+  .then(res=>res.json())
+  .then(data=>{
+
+    const approved = document.getElementById("approvedTable");
+    const pending = document.getElementById("pendingTable");
+
+    approved.innerHTML="";
+    pending.innerHTML="";
+
+    let approvedCount = 1;
+    let pendingCount = 1;
+
+    data.claims.forEach(c=>{
+
+      // Approved / Active Claims
+      if(c.status === "approved" || c.status === "in_repair" || c.status === "completed"){
+        approved.innerHTML += `
+          <tr>
+            <td>${approvedCount++}</td>
+            <td>${c.customer}</td>
+            <td>${c.product}</td>
+            <td>${c.serial}</td>
+            <td>${c.status}</td>
+            <td>
+              <button class="status-btn repair" onclick="updateStatus(${c.id},'in_repair')">Repair</button>
+              <button class="status-btn complete" onclick="updateStatus(${c.id},'completed')">Complete</button>
+            </td>
+          </tr>
+        `;
+      }
+
+      // Pending Claims
+      if(c.status === "pending"){
+        pending.innerHTML += `
+          <tr>
+            <td>${pendingCount++}</td>
+            <td>${c.customer}</td>
+            <td>${c.product}</td>
+            <td>${c.serial}</td>
+            <td>
+              <button class="status-btn approve" onclick="updateStatus(${c.id},'approved')">Approve</button>
+              <button class="status-btn reject" onclick="updateStatus(${c.id},'rejected')">Reject</button>
+            </td>
+          </tr>
+        `;
+      }
+
+    });
+
+  });
+}
+
+
+
+
+function searchCustomer(){
+  const id=document.getElementById("searchId").value;
+
+  fetch(`/search-customer-api/?customer_id=${id}`)
+  .then(res=>res.json())
+  .then(data=>{
+    const box=document.getElementById("searchResult");
+
+    if(!data.found){
+      box.innerHTML="<p>No customer found</p>";
+      return;
+    }
+
+    box.innerHTML=`
+      <h3>${data.name}</h3>
+      <p>Email: ${data.email}</p>
+      <p>Mobile: ${data.mobile}</p>
+      <p>Address: ${data.address}</p>
+    `;
+  });
+}
+
+
+
+setInterval(loadClaims,4000);
+window.onload=loadClaims;
+
+function toggleTheme(){
+  document.body.classList.toggle("dark-mode");
+}
+
+function logout(){
+  window.location.href="/logout/";
+}
+function loadDashboard(){
+
+  fetch("/service-dashboard-api/")
+  .then(res=>res.json())
+  .then(data=>{
+
+    document.getElementById("kpiPending").innerText = data.pending;
+    document.getElementById("kpiRepair").innerText = data.repair;
+    document.getElementById("kpiCompleted").innerText = data.completed_today;
+    document.getElementById("kpiMonthly").innerText = data.monthly_total;
+    document.getElementById("kpiExpiring").innerText = data.expiring;
+
+    // Pipeline progress logic
+    let total = data.pending + data.approved + data.repair + data.completed_today;
+    let percent = total > 0 ? (data.completed_today / total) * 100 : 0;
+    document.getElementById("pipelineBar").style.width = percent + "%";
+
+    // Smart alerts
+    const alertBox = document.getElementById("alertBox");
+    alertBox.innerHTML = "";
+
+    if(data.expiring > 0){
+      alertBox.innerHTML += `<li>⚠ ${data.expiring} warranties expiring soon</li>`;
+    }
+
+    if(data.pending > 5){
+      alertBox.innerHTML += `<li>📥 High pending claim volume</li>`;
+    }
+
+    if(data.repair > 3){
+      alertBox.innerHTML += `<li>🔧 Multiple repairs ongoing</li>`;
+    }
+
+    if(alertBox.innerHTML === ""){
+      alertBox.innerHTML = "<li>✅ System operating normally</li>";
+    }
+
+  });
+}
+setInterval(loadDashboard,5000);
+window.onload=function(){
+  loadDashboard();
+  loadClaims();
+};
+
+</script>
+<!-- ================= VAULTX CHATBOT ================= -->
+<div id="vx-chat-button">💬</div>
+
+<div id="vx-chat">
+
+    <div class="vx-header">
+        <div class="vx-title">
+            <div class="vx-avatar">V</div>
+            <div>
+                <b>VaultX Assistant</b>
+                <small>Online</small>
+            </div>
+        </div>
+        <div id="vx-close">✕</div>
+    </div>
+
+    <div id="vx-messages"></div>
+
+    <div class="vx-input">
+        <input id="vx-text" placeholder="Ask about warranty, claims, repairs..." autocomplete="off">
+        <button id="vx-send">➤</button>
+    </div>
+
+</div>
+
+<style>
+
+/* Floating button */
+#vx-chat-button{
+    position:fixed;
+    bottom:22px;
+    right:22px;
+    width:64px;
+    height:64px;
+    border-radius:50%;
+    background:linear-gradient(135deg,#2563eb,#1e3a8a);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    font-size:28px;
+    cursor:pointer;
+    box-shadow:0 12px 30px rgba(0,0,0,.25);
+    z-index:9999;
+}
+
+/* Chat box */
+#vx-chat{
+    position:fixed;
+    bottom:100px;
+    right:22px;
+    width:360px;
+    height:520px;
+    background:#fff;
+    border-radius:20px;
+    box-shadow:0 25px 70px rgba(0,0,0,.28);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    transform:translateY(40px) scale(.9);
+    opacity:0;
+    pointer-events:none;
+    transition:.25s ease;
+    z-index:9999;
+}
+#vx-chat.open{
+    transform:translateY(0) scale(1);
+    opacity:1;
+    pointer-events:auto;
+}
+
+/* Header */
+.vx-header{
+    background:linear-gradient(135deg,#2563eb,#1e40af);
+    color:white;
+    padding:14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+.vx-title{display:flex;gap:10px;align-items:center;}
+.vx-avatar{
+    width:36px;height:36px;border-radius:50%;
+    background:white;color:#2563eb;
+    display:flex;align-items:center;justify-content:center;
+    font-weight:bold;
+}
+#vx-close{cursor:pointer;font-size:18px}
+
+/* Messages */
+#vx-messages{
+    flex:1;
+    padding:16px;
+    overflow-y:auto;
+    background:#f1f5f9;
+}
+
+.msg{
+    max-width:75%;
+    padding:10px 14px;
+    border-radius:16px;
+    margin-bottom:10px;
+    line-height:1.4;
+    white-space:pre-wrap;
+}
+.user{background:#2563eb;color:white;margin-left:auto;border-bottom-right-radius:4px;}
+.bot{background:white;border:1px solid #e5e7eb;border-bottom-left-radius:4px;}
+.typing{opacity:.6;font-style:italic}
+
+/* Input */
+.vx-input{
+    display:flex;
+    padding:12px;
+    border-top:1px solid #e5e7eb;
+    background:white;
+}
+#vx-text{
+    flex:1;
+    border:none;
+    outline:none;
+    background:#f1f5f9;
+    padding:12px;
+    border-radius:30px;
+}
+#vx-send{
+    margin-left:10px;
+    border:none;
+    background:#2563eb;
+    color:white;
+    border-radius:50%;
+    width:42px;
+    height:42px;
+    cursor:pointer;
+}
+
+/* Mobile responsive */
+@media(max-width:600px){
+    #vx-chat{
+        width:100%;
+        height:100%;
+        right:0;
+        bottom:0;
+        border-radius:0;
+    }
+}
+
+</style>
+
+<script>
+
+const btn=document.getElementById("vx-chat-button");
+const chat=document.getElementById("vx-chat");
+const close=document.getElementById("vx-close");
+const send=document.getElementById("vx-send");
+const input=document.getElementById("vx-text");
+const box=document.getElementById("vx-messages");
+
+/* open / close */
+btn.onclick=()=>chat.classList.toggle("open");
+close.onclick=()=>chat.classList.remove("open");
+
+/* add message */
+function addMessage(text,type,extra=""){
+    const div=document.createElement("div");
+    div.className=`msg ${type} ${extra}`;
+    div.textContent=text;
+    box.appendChild(div);
+    box.scrollTop=box.scrollHeight;
+    return div;
+}
+
+/* send to django */
+async function sendMessage(){
+
+    const text=input.value.trim();
+    if(!text) return;
+
+    addMessage(text,"user");
+    input.value="";
+
+    const typing=addMessage("Typing...","bot","typing");
+
+    try{
+        const response=await fetch("/chatbot_api/",{
+            method:"POST",
+            headers:{
+                "Content-Type":"application/json"
+            },
+            body:JSON.stringify({message:text})
+        });
+
+        const data=await response.json();
+        typing.remove();
+
+        if(data.reply)
+            addMessage(data.reply,"bot");
+        else
+            addMessage("AI did not respond properly.","bot");
+
+    }catch(e){
+        typing.remove();
+        addMessage("Server connection failed.","bot");
+    }
+}
+
+/* send events */
+send.onclick=sendMessage;
+input.addEventListener("keypress",e=>{
+    if(e.key==="Enter") sendMessage();
+});
+
+</script>
+<!-- ================= END CHATBOT ================= -->
+
+</body>
+</html>
